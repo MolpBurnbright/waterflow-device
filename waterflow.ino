@@ -20,9 +20,9 @@
 #define WATERFLOW_SENSOR_PIN 23
 #define VALVE_CONTROLLER_PIN 2
 
-#define VOLUM_COMP_INTERVAL 500
+#define VOLUM_COMP_INTERVAL 2000
 #define VALVE_SYNC_INTERVAL 2000
-#define VOLUM_UPDT_INTERVAL 5000
+#define VOLUM_UPDT_INTERVAL 2000
 
 // Authentication
 UserAuth userAuth(Web_API_KEY, USER_EMAIL, USER_PASSWORD);
@@ -39,6 +39,10 @@ AsyncResult firestoreResult;
 LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 String DEVICE_NAME = "test_device_1";
+
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 28800;
+const int   daylightOffset_sec = 0;
 
 volatile int pulse;
 
@@ -61,8 +65,10 @@ void setup() {
   
   connectWiFi();
 
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
   lcd.init();
-  lcd.backlight();
+//  lcd.backlight();
 
   pinMode(WATERFLOW_SENSOR_PIN, INPUT);
   pinMode(VALVE_CONTROLLER_PIN, OUTPUT);
@@ -237,6 +243,7 @@ void loop() {
       }
     }
   }
+
 }
 
 void syncValveAndMaxFlow(){
@@ -317,12 +324,13 @@ void checkWaterLeak(){
         updateValveStatus();
         sendLeakLog((ntpTime + currTime/1000), (ntpTime + startFlowTime/1000));
       }
+
+      startFlowTime = currTime;
     }
   }
   else{
 
     startFlowTime = currTime;
-
   }
 
 }
